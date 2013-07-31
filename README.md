@@ -18,10 +18,12 @@ The following describes how the data was processed and is not necessarily needed
 
 (coming soon)
 
-## Prerequisites
+## PrerequisitesAll commands are assumed to on the [command line](http://en.wikipedia.org/wiki/Command-line_interface), often called the Terminal, unless otherwise noted.
 
 1. Install [Git](http://git-scm.com/).
+   * On a Mac, install [Homebrew](http://brew.sh/), then do: `brew install git`.
 1. Install [NodeJS](http://nodejs.org/).
+   * On a Mac, do: `brew install node`.
 1. Optionally, for development, install [Grunt](http://gruntjs.com/): `npm install -g grunt-cli`
 1. Install [Bower](http://bower.io/): `npm install -g bower` 
 1. Install [Ruby](http://www.ruby-lang.org/en/downloads/), though it is probably already installed on your system.
