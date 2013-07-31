@@ -4,15 +4,19 @@ A look at marriages in Minnesota, specifically given the new same-sex marriage l
 
 ## Data
 
-*Describe the data sources here.  Use links and URLs to show where the data came from.  Put small sized originals or modified data sources in the ```data``` folder*
+Data for this project was gathered through Data Practices Act request from individual counties, including:
 
-*For larger data sources that may need to be processed, provide instructions on how to download.  For instance:  ```cd data && wget blah.txt```.  Also, make sure to put an entry in the ```.gitignore```.*
+* Hennepin County
+
+### MOMS
+
+The [Minnesota Association of County Officers](http://www.mncounty.org/) (MACO) runs the Minnesota [Official Marriage System](http://www.mncounty.com/) (MOMS) which collects basic information on all marriage certificates across the state.  Their [terms](http://www.mncounty.com/Modules/Certificates/Marriage/terms.htm) specifically disallow web scraping.  It is also unknown if the organization is supposed to follow the DPA laws as it is not a government agency, and attempts to contact them have not been answered.
 
 ## Data Processing
 
 The following describes how the data was processed and is not necessarily needed to run or install the application, but more included for reference, transparency, and development.
 
-*Describe data processing here, include commands.  Put data processing scripts or configurations in the ```data-processing``` folder.*
+(coming soon)
 
 ## Prerequisites
 
@@ -22,21 +26,16 @@ The following describes how the data was processed and is not necessarily needed
 1. Install [Bower](http://bower.io/): `npm install -g bower` 
 1. Install [Ruby](http://www.ruby-lang.org/en/downloads/), though it is probably already installed on your system.
 1. Install [Bundler](http://gembundler.com/): `gem install bundler` 
-
 1. Install [Sass](http://sass-lang.com/): `gem install sass`
-
 
 ## Install
 
 1. Check out this code with [Git](http://git-scm.com/): `git clone https://github.com/MinnPost/minnpost-marriage-analysis.git`
 1. Go into the template directory: `cd minnpost-marriage-analysis`
 1. Install NodeJS packages: `npm install`
-1. Install Bower components: `bower install` 
+1. Install Bower components: `bower install`
 
-
-1. View `index.html` in your browser.
-
-## Development
+## Development and Running Locally
 
 * Run: `grunt server`
    * This will run a local webserver for development and you can view the application in your web browser at [http://localhost:8899](http://localhost:8899).
