@@ -16,7 +16,10 @@ The [Minnesota Association of County Officers](http://www.mncounty.org/) (MACO) 
 
 The following describes how the data was processed and is not necessarily needed to run or install the application, but more included for reference, transparency, and development.
 
-(coming soon)
+1. Get datasets.  These could be large.
+    * `wget -c -O data/orig-hennepin-18500101-20111115.txt https://s3.amazonaws.com/data.minnpost/projects/minnpost-marriage-analysis/original_data/MARRIAGP.TXT`
+1. Setup a Postgres database named `mn_marriage`.
+1. Run `node data-processing/import-db.js`.  You may need to update the connection string in this file.
 
 ## Development and running locally
 
