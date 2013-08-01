@@ -83,71 +83,78 @@ function makeTables(done) {
 imports.hennepin = function(done) {
   var client = new pg.Client(connection);
   var file = path.join(__dirname, '../data/orig-hennepin-18500101-20111115.txt');
+  var stream;
   var columnsWidths = [1, 39, 15, 15, 39, 15, 15, 39, 15, 15, 39, 15, 15, 10, 10, 10, 33, 1, 26];
   var linesCount = 0;
-  var fileStream, dbStream;
-    
-  // Create Postgres COPY stream
-  // http://www.postgresql.org/docs/9.2/static/sql-copy.html
-  client.connect();
-  dbStream = client.copyFrom("COPY marriages (county, groom_last_before, groom_first_before, groom_middle_before, bride_last_before, bride_first_before, bride_middle_before, groom_last_after, groom_first_after, groom_middle_after, bride_last_after, bride_first_after, bride_middle_after, certificate_date, application_date, file_date, external_id, notes) FROM STDIN WITH DELIMITER '|' QUOTE '\"' CSV");
+  var multiQuery = '';
   
-  // Handle db stream events
-  dbStream.on('close', function () {
-    console.log('Data inserted sucessfully.');
-  });
-  dbStream.on('error', function (error) {
-    console.error('DB stream error.', error);
-  });
-  
-  // Start reading in the file data
-  fileStream = lineifyStream(fs.createReadStream(file));
-  fileStream.on('line', function(line) {
-    var fields = [];
-    var c = 0;
-    var width;
-  
-    // Fixed width file.  Each line should be 369 characters wide
-    // and each field is variable fixed width.  :(
-    if (line.length != 367) {
-      console.log('Line length is off (' + line.length + '): ' + line);
-      return;
+  // DB connect
+  client.connect(function(err) {
+    if (err) {
+      return console.error('Could not connect to postgres.', err);
     }
     
-    columnsWidths.forEach(function(w) {
-      fields.push(line.substring(c, c + w).trim());
-      c = c + w;
-    });
+    // Start reading in the data
+    stream = lineifyStream(fs.createReadStream(file));
+    stream.on('line', function(line) {
+      var fields = [];
+      var c = 0;
+      var width;
+      var query;
     
-    // Muck up array so that it easier to write query
-    fields.shift();
-    fields[16] = fields[16] + '||' + fields[17];
-    fields.pop();
-    fields = fields.map(function(f, i) {
-      var dateParts;
-    
-      if ([12, 13, 14].indexOf(i) >= 0) {
-        dateParts = f.split('/');
-        //return (dateParts.length === 0 || !dateParts[0]) ? '' : 
-        //  dateParts[2] + '-' + dateParts[0] + '-' + dateParts[1];
-        return (dateParts.length === 0 || !dateParts[0]) ? '' : f;
+      // Fixed width file.  Each line should be 369 characters wide
+      // and each field is variable fixed width.  :(
+      if (line.length != 367) {
+        console.log('Line length is off (' + line.length + '): ' + line);
+        return;
       }
-      else {
-        return '"' + f.replace("", "") + '"';
+      
+      columnsWidths.forEach(function(w) {
+        fields.push(line.substring(c, c + w).trim());
+        c = c + w;
+      });
+      
+      // Muck up array so that it easier to write query
+      fields.shift();
+      fields[16] = fields[16] + '||' + fields[17];
+      fields.pop();
+      fields = fields.map(function(f) {
+        return "'" + f.replace("'", "''") + "'";
+      });
+      fields[12] = "to_date(" + fields[12] + ", 'DD/MM/YYYY')";
+      fields[13] = "to_date(" + fields[13] + ", 'DD/MM/YYYY')";
+      fields[14] = "to_date(" + fields[14] + ", 'DD/MM/YYYY')";
+      
+      query = "INSERT INTO marriages (county, groom_last_before, groom_first_before, groom_middle_before, bride_last_before, bride_first_before, bride_middle_before, groom_last_after, groom_first_after, groom_middle_after, bride_last_after, bride_first_after, bride_middle_after, certificate_date, application_date, file_date, external_id, notes) VALUES ('hennepin', " + fields.join(', ') + ")";
+      
+      // We only want to do a bulk insert every so often
+      multiQuery += query + '; ';
+      linesCount++;
+      
+      if (linesCount % 100 === 0) {
+        (function(linesCount) {
+          client.query(multiQuery, function(err, result) {
+            if (err) {
+              return console.error('Error inserting data with query: ' + multiQuery, err);
+            }
+            console.log('Inserts Hennepin with lines: ' + linesCount);
+          });
+          multiQuery = '';
+        })(linesCount);
       }
     });
-    
-    // Write to stream
-    dbStream.write('hennepin|' + fields.join('|') + '\n', undefined, function() { console.log('ttt'); });
-    
-    linesCount++;
-    if (linesCount % 10000 === 0) {
-      console.log('Read in ' + linesCount + ' lines from Hennepin data.');
-    }
-  });
-  fileStream.on('end', function() {
-    dbStream.end();
-    done(linesCount);
+    stream.on('end', function() {
+      console.log('Imported Hennepin with lines: ' + linesCount);
+      
+      client.query(multiQuery, function(err, result) {
+        if (err) {
+          return console.error('Error inserting data with query: ' + multiQuery, err);
+        }
+      
+        done();
+        client.end();
+      });
+    });
   });
 };
 
@@ -186,7 +193,7 @@ function lineifyStream(stream) {
 
 // Run app
 makeTables(function() {
-  imports.hennepin(function(lines) {
-    console.log('Done.  Read ' + lines + ' lines.');
+  imports.hennepin(function() {
+    console.log('Done.');
   });
 });
