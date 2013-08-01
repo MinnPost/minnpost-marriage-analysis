@@ -12,7 +12,8 @@
     "url": "https://github.com/MinnPost/minnpost-marriage-analysis/issues"
   },
   "dependencies": {
-    "pg": "~2.3.0"
+    "pg": "~2.3.0",
+    "celeri": "~0.3.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

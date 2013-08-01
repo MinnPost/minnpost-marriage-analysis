@@ -7,6 +7,7 @@ var path = require('path');
 var fs = require('fs');
 var events = require('events');
 var pg = require('pg');
+var celeri = require('celeri');
 
 // Config
 var connection = 'postgres://postgres:@localhost/mn_marriage';
@@ -15,6 +16,8 @@ var imports = {};
 // Make the tables
 function makeTables(done) {
   var client = new pg.Client(connection);
+  var loading = celeri.loading('Creating and resetting Marriage table: ');
+  
   var query = " \
     DROP TABLE marriages; CREATE TABLE IF NOT EXISTS marriages ( \
       id SERIAL, \
@@ -41,14 +44,16 @@ function makeTables(done) {
   
   client.connect(function(err) {
     if (err) {
+      loading.done('Error.', false);
       return console.error('Could not connect to postgres.', err);
     }
     client.query(query, function(err, result) {
       if (err) {
+        loading.done('Error.', false);
         return console.error('Error running table query.', err);
       }
       
-      console.log('Table created.');
+      loading.done('Done.', true);
       client.end();
       done();
     });
@@ -85,12 +90,17 @@ imports.hennepin = function(done) {
   var file = path.join(__dirname, '../data/orig-hennepin-18500101-20111115.txt');
   var stream;
   var columnsWidths = [1, 39, 15, 15, 39, 15, 15, 39, 15, 15, 39, 15, 15, 10, 10, 10, 33, 1, 26];
-  var linesCount = 0;
+  var readCount = 0;
+  var writeCount = 0;
   var multiQuery = '';
+  
+  // Mark progress
+  celeri.progress('Reading Hennepin file: ', 0);
   
   // DB connect
   client.connect(function(err) {
     if (err) {
+      fileLoading.done('Error.', false);
       return console.error('Could not connect to postgres.', err);
     }
     
@@ -129,31 +139,59 @@ imports.hennepin = function(done) {
       
       // We only want to do a bulk insert every so often
       multiQuery += query + '; ';
-      linesCount++;
+      readCount++;
       
-      if (linesCount % 100 === 0) {
-        (function(linesCount) {
+      if (readCount % 100 === 0) {
+        // Mark progress
+        celeri.progress('Reading Hennepin file: ', (readCount / 829100 * 100).toFixed(2));
+      
+        (function(readCount) {
           client.query(multiQuery, function(err, result) {
             if (err) {
-              return console.error('Error inserting data with query: ' + multiQuery, err);
+              // Try again.  For some reason things fail out and give
+              // syntax error even those there are none, occasionally.
+              client.query(multiQuery, function(err, result) {
+                if (err) {
+                  console.error('Error inserting data with query: ' + multiQuery, err);
+                }
+              });
             }
-            console.log('Inserts Hennepin with lines: ' + linesCount);
+            writeCount = readCount;
           });
           multiQuery = '';
-        })(linesCount);
+        })(readCount);
       }
     });
+    
     stream.on('end', function() {
-      console.log('Imported Hennepin with lines: ' + linesCount);
-      
-      client.query(multiQuery, function(err, result) {
-        if (err) {
-          return console.error('Error inserting data with query: ' + multiQuery, err);
-        }
-      
-        done();
-        client.end();
-      });
+      var interval;
+      var pastWriteCount = 0;
+      celeri.progress('Reading Hennepin file: ', 100);
+      celeri.progress('Writing Hennepin data to DB: ', (writeCount / readCount * 100).toFixed(2));
+    
+      // More than likely the output into the DB will take much
+      // longer than the file reading, so we just pool to see
+      // when its done as there does not seem to be
+      if (writeCount != readCount) {
+        interval = setInterval(function() {
+          if (writeCount >= readCount || writeCount === pastWriteCount) {
+            // Need to write out the last query
+            client.query(multiQuery, function(err, result) {
+              if (err) {
+                return console.error('Error inserting data with query: ' + multiQuery, err);
+              }
+            
+              celeri.progress('Writing Hennepin data to DB: ', 100);
+              done();
+              client.end();
+            });
+            clearInterval(interval);
+          }
+          
+          pastWriteCount = writeCount;
+          celeri.progress('Writing Hennepin data to DB: ', (writeCount / readCount * 100).toFixed(2));
+        }, 1000);
+      }
     });
   });
 };
@@ -174,7 +212,7 @@ function lineifyStream(stream) {
     }
     else {
       for (l = 0; l < lines.length - 1; l ++) {
-        if (lines[l] !== '') {
+        if (lines[l] !== '' && lines[l].length != 0) {
           stream.emit('line', lines[l]);
         }
       };
