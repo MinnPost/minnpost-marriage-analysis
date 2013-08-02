@@ -131,9 +131,9 @@ imports.hennepin = function(done) {
       fields = fields.map(function(f) {
         return "'" + f.replace("'", "''") + "'";
       });
-      fields[12] = "to_date(" + fields[12] + ", 'DD/MM/YYYY')";
-      fields[13] = "to_date(" + fields[13] + ", 'DD/MM/YYYY')";
-      fields[14] = "to_date(" + fields[14] + ", 'DD/MM/YYYY')";
+      fields[12] = "to_date(" + fields[12] + ", 'MM/DD/YYYY')";
+      fields[13] = "to_date(" + fields[13] + ", 'MM/DD/YYYY')";
+      fields[14] = "to_date(" + fields[14] + ", 'MM/DD/YYYY')";
       
       query = "INSERT INTO marriages (county, groom_last_before, groom_first_before, groom_middle_before, bride_last_before, bride_first_before, bride_middle_before, groom_last_after, groom_first_after, groom_middle_after, bride_last_after, bride_first_after, bride_middle_after, certificate_date, application_date, file_date, external_id, notes) VALUES ('hennepin', " + fields.join(', ') + ")";
       
