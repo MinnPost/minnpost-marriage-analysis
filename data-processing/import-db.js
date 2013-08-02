@@ -25,12 +25,14 @@ function makeTables(done) {
       groom_last_before VARCHAR(256), \
       groom_first_before VARCHAR(256), \
       groom_middle_before VARCHAR(256), \
+      groom_suffix_before VARCHAR(256), \
       bride_last_before VARCHAR(256), \
       bride_first_before VARCHAR(256), \
       bride_middle_before VARCHAR(256), \
       groom_last_after VARCHAR(256), \
       groom_first_after VARCHAR(256), \
       groom_middle_after VARCHAR(256), \
+      groom_suffix_after VARCHAR(256), \
       bride_last_after VARCHAR(256), \
       bride_first_after VARCHAR(256), \
       bride_middle_after VARCHAR(256), \
@@ -109,8 +111,7 @@ imports.hennepin = function(done) {
     stream.on('line', function(line) {
       var fields = [];
       var c = 0;
-      var width;
-      var query;
+      var query, parts;
     
       // Fixed width file.  Each line should be 369 characters wide
       // and each field is variable fixed width.  :(
@@ -128,6 +129,21 @@ imports.hennepin = function(done) {
       fields.shift();
       fields[16] = fields[16] + '||' + fields[17];
       fields.pop();
+      
+      // Suffixes :(
+      [0, 6].forEach(function(f) {
+        parts = fields[f].split(' ');
+        if (parts.length > 1 && ['JR', 'SR', 'II', 'III'].indexOf(parts[parts.length - 1]) >= 0) {
+          fields.push(parts[parts.length - 1]);
+          parts.pop();
+          fields[f] = parts.join(' ');
+        }
+        else {
+          fields.push('');
+        }
+      });
+      
+      // Format array for query
       fields = fields.map(function(f) {
         return "'" + f.replace("'", "''") + "'";
       });
@@ -135,7 +151,15 @@ imports.hennepin = function(done) {
       fields[13] = "to_date(" + fields[13] + ", 'MM/DD/YYYY')";
       fields[14] = "to_date(" + fields[14] + ", 'MM/DD/YYYY')";
       
-      query = "INSERT INTO marriages (county, groom_last_before, groom_first_before, groom_middle_before, bride_last_before, bride_first_before, bride_middle_before, groom_last_after, groom_first_after, groom_middle_after, bride_last_after, bride_first_after, bride_middle_after, certificate_date, application_date, file_date, external_id, notes) VALUES ('hennepin', " + fields.join(', ') + ")";
+      // Great array
+      query = "INSERT INTO marriages (county, \
+        groom_last_before, groom_first_before, groom_middle_before, \
+        bride_last_before, bride_first_before, bride_middle_before, \
+        groom_last_after, groom_first_after, groom_middle_after, \
+        bride_last_after, bride_first_after, bride_middle_after, \
+        certificate_date, application_date, file_date, \
+        external_id, notes, groom_suffix_before, groom_suffix_after \
+        ) VALUES ('hennepin', " + fields.join(', ') + ")";
       
       // We only want to do a bulk insert every so often
       multiQuery += query + '; ';
