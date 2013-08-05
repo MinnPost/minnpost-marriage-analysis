@@ -6,11 +6,17 @@
 var path = require('path');
 var fs = require('fs');
 var events = require('events');
+var sys = require('sys');
+var exec = require('child_process').exec;
 var pg = require('pg');
 var celeri = require('celeri');
 
 // Config
-var connection = 'postgres://postgres:@localhost/mn_marriage';
+var dbName = 'mn_marriage';
+var dbHost = 'localhost';
+var dbUser = 'postgres';
+var dbPass = '';
+var connection = 'postgres://' + dbUser + ':' + dbPass + '@' + dbHost + '/' + dbName;
 var imports = {};
 
 // Make the tables
@@ -19,7 +25,7 @@ function makeTables(done) {
   var loading = celeri.loading('Creating and resetting Marriage table: ');
   
   var query = " \
-    DROP TABLE marriages; CREATE TABLE IF NOT EXISTS marriages ( \
+    DROP TABLE IF EXISTS marriages; CREATE TABLE IF NOT EXISTS marriages ( \
       id SERIAL, \
       county VARCHAR(128), \
       groom_last_before VARCHAR(256), \
@@ -42,7 +48,21 @@ function makeTables(done) {
       external_id VARCHAR(512), \
       notes TEXT, \
       CONSTRAINT marriages_primary_key PRIMARY KEY (id) \
-    )";
+    ); \
+    DROP TABLE IF EXISTS usnames; CREATE TABLE IF NOT EXISTS usnames ( \
+      id SERIAL, \
+      name VARCHAR(256), \
+      years INT, \
+      female_count INT, \
+      male_count INT, \
+      male_probablity FLOAT, \
+      probably_gender VARCHAR(56), \
+      estimated_male FLOAT, \
+      upper FLOAT, \
+      lower FLOAT, \
+      CONSTRAINT usnames_primary_key PRIMARY KEY (id) \
+    ); \
+    ";
   
   client.connect(function(err) {
     if (err) {
@@ -63,6 +83,33 @@ function makeTables(done) {
 }
 
 // Imports
+
+/**
+ * Import US Names with command line since
+ * its already in the right format.
+ */
+imports.usNames = function(done) {
+  var file = path.join(__dirname, '../data/orig-open-gender-tracking-us-names.csv');
+  var loading = celeri.loading('Importing US Names file: ');
+  var command = 'psql';
+  
+  command += ' -U ' + dbUser;
+  command += ' -h ' + dbHost;
+  command += (dbPass) ? ' -p ' : '';
+  command += ' ' + dbName;
+  command += ' -c "COPY usnames (name, years, female_count, male_count, male_probablity, probably_gender, estimated_male, upper, lower) FROM \'' + file + '\' CSV HEADER"';
+  
+  exec(command, function(error, stdout, stderr) {
+    if (error) {
+      loading.done('Error with US Names import.', false);
+      return;
+    }
+    
+    loading.done('Done.', true);
+    done();
+  });
+};
+
 
 /**
  * Hennepin imports.  The following was sent with data
@@ -255,7 +302,9 @@ function lineifyStream(stream) {
 
 // Run app
 makeTables(function() {
-  imports.hennepin(function() {
-    console.log('Done.');
+  imports.usNames(function() {
+    imports.hennepin(function() {
+      console.log('Done.');
+    });
   });
 });

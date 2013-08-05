@@ -18,6 +18,7 @@ The following describes how the data was processed and is not necessarily needed
 
 1. Get datasets.  These could be large.
     * `wget -c -O data/orig-hennepin-18500101-20111115.txt https://s3.amazonaws.com/data.minnpost/projects/minnpost-marriage-analysis/original_data/MARRIAGP.TXT`
+    * `wget -c -O data/orig-open-gender-tracking-us-names.csv https://raw.github.com/OpenGenderTracking/globalnamedata/master/assets/usprocessed.csv`
 1. Setup a Postgres database named `mn_marriage`.
 1. Run `node data-processing/import-db.js`.  You may need to update the connection string in this file.
 
