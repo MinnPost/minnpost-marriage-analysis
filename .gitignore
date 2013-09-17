@@ -6,6 +6,7 @@ dist/data.js
 dist/templates.js
 false
 data/orig-*
+data/**/orig-*
 
 # General git ignores
 .sass-cache
