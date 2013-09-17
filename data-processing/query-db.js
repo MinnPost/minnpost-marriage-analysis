@@ -20,35 +20,37 @@ function queries(done) {
   
   /*
   SELECT
-	EXTRACT(YEAR FROM m.certificate_date) AS year,
-	COUNT(m.*) AS stat,
-	t.stat AS total,
-	(COUNT(m.*)::float / t.stat::float) AS percent
+  EXTRACT(YEAR FROM m.certificate_date) AS year,
+  EXTRACT(YEAR FROM m.certificate_date) || '-01-01' AS year_date,
+  COUNT(m.*) AS stat,
+  t.stat AS total,
+  (COUNT(m.*)::float / t.stat::float) AS percent_dec,
+  (COUNT(m.*)::float / t.stat::float) * 100 AS percent
 FROM 
-	marriages AS m
-	JOIN (
-		SELECT
-			EXTRACT(YEAR FROM certificate_date) AS year,
-			COUNT(*) AS stat
-		FROM 
-			marriages
-		WHERE
-			EXTRACT(YEAR FROM certificate_date) > 0
-		GROUP BY 
-			year
-		ORDER BY
-			year
-	) AS T
-	ON EXTRACT(YEAR FROM m.certificate_date) = t.year
+  marriages AS m
+  JOIN (
+    SELECT
+      EXTRACT(YEAR FROM certificate_date) AS year,
+      COUNT(*) AS stat
+    FROM 
+      marriages
+    WHERE
+      EXTRACT(YEAR FROM certificate_date) > 0
+    GROUP BY 
+      year
+    ORDER BY
+      year
+  ) AS T
+  ON EXTRACT(YEAR FROM m.certificate_date) = t.year
 WHERE 
-	m.bride_last_before <> m.bride_last_after
-	AND m.groom_last_before <> m.bride_last_before
-	AND year > 0
+  m.bride_last_before <> m.bride_last_after
+  AND m.groom_last_before <> m.bride_last_before
+  AND year > 0
 GROUP BY 
-	EXTRACT(YEAR FROM m.certificate_date),
-	t.stat
+  EXTRACT(YEAR FROM m.certificate_date),
+  t.stat
 ORDER BY
-	year
+  year
 	
 	*/
   
