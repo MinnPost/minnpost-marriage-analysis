@@ -7,6 +7,8 @@ A look at marriages in Minnesota, specifically given the new same-sex marriage l
 Data for this project was gathered through Data Practices Act request from individual counties, including:
 
 * Hennepin County
+    * The following was noted about the data from Hennepin County: "Thanks for your patience as we’ve reviewed your question.  We do not believe the data file we provided should have included any data about names after marriage prior to August, 1975.  Specifically, we believe that the County did not include a “name after marriage” field on its marriage license application until August 1, 1975.  Accordingly, we did not start collecting data about names after marriage until that time.  We are unable to explain why the electronic file we provided to you includes names after marriage before that date.  That file was extracted from a mainframe computer which is no longer in use.  It is possible that those names appear as a result of an error or limitation in entering data into the old mainframe; we simply cannot be sure.  However, we believe any data prior to 1975 about names after marriage is not valid."
+* Ramsey County
 
 ### MOMS
 
@@ -17,7 +19,7 @@ The [Minnesota Association of County Officers](http://www.mncounty.org/) (MACO) 
 The following describes how the data was processed and is not necessarily needed to run or install the application, but more included for reference, transparency, and development.
 
 1. Get datasets.  These could be large.
-    * `mkdir -p data/hennepin-county/ && mkdir -p data/ramset-county/`
+    * `mkdir -p data/hennepin-county/ && mkdir -p data/ramsey-county/`
     * `wget -c -O data/hennepin-county/orig-hennepin-18500101-20111115.txt https://s3.amazonaws.com/data.minnpost/projects/minnpost-marriage-analysis/original_data/hennepin-county/MARRIAGP.TXT`
     * `wget -c -O data/ramsey-county/orig-marriages.csv https://s3.amazonaws.com/data.minnpost/projects/minnpost-marriage-analysis/original_data/ramsey-county/marriage.csv`
     * `wget -c -O data/ramsey-county/orig-officiators.csv https://s3.amazonaws.com/data.minnpost/projects/minnpost-marriage-analysis/original_data/ramsey-county/officiator2.csv`
